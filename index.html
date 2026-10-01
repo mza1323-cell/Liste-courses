@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Courses">
+<title>Ma liste de courses</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--text:#17202a;--muted:#6b7280;--accent:#1677ff;--line:#e5e7eb;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:rgba(245,246,248,.94);backdrop-filter:blur(16px);padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;border-bottom:1px solid var(--line)}
+h1{font-size:28px;margin:0 0 12px;font-weight:750}
+.sub{color:var(--muted);font-size:14px}
+.search{width:100%;border:0;background:#e9ebef;border-radius:13px;padding:12px 14px;font-size:16px;outline:none;margin-top:12px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;border:0;border-radius:20px;background:#e9ebef;padding:9px 13px;font-size:14px;color:#30343b}
+.tab.active{background:var(--accent);color:#fff}
+main{padding:14px 12px}
+.section-title{font-size:20px;font-weight:750;margin:4px 4px 10px}
+.progress{height:7px;background:#e3e6eb;border-radius:99px;overflow:hidden;margin:0 4px 14px}
+.progress>div{height:100%;background:var(--accent);width:0;transition:.2s}
+.card{background:var(--card);border-radius:16px;margin:8px 0;box-shadow:0 1px 2px rgba(0,0,0,.04);border:1px solid #eceef1;overflow:hidden}
+.item{display:flex;align-items:center;gap:11px;padding:13px 12px;min-height:62px}
+.check{width:25px;height:25px;border:2px solid #b8bec8;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;font-size:15px;color:#fff}
+.item.done .check{background:var(--accent);border-color:var(--accent)}
+.item.done .name{text-decoration:line-through;color:#9aa0a9}
+.name{font-size:16px;line-height:1.2;flex:1}
+.qty{width:60px;border:1px solid var(--line);border-radius:9px;padding:8px 6px;text-align:center;font-size:16px;background:#fafafa}
+.footer{position:fixed;z-index:10;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px}
+.btn{flex:1;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:650}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:#e9ebef;color:#252a31}
+.empty{text-align:center;color:var(--muted);padding:40px 15px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 Ma liste de courses</h1>
+  <div class="sub" id="summary">0 article à acheter</div>
+  <input class="search" id="search" placeholder="Rechercher un article…" autocomplete="off">
+  <div class="tabs" id="tabs"></div>
+</header>
+<main id="main"></main>
+<div class="footer">
+  <button class="btn secondary" id="reset">Réinitialiser</button>
+  <button class="btn primary" id="share">Partager</button>
+</div>
+<script>
+const DATA = {"Légumes Frais": [{"name": "Pommes de terre", "qty": 1}, {"name": "Carottes", "qty": 6}, {"name": "Courgettes", "qty": 6}, {"name": "Tomates couleus", "qty": 4}, {"name": "Tomates mini boite", "qty": 2}, {"name": "Betterave nettoyée", "qty": 2}, {"name": "Fenouil", "qty": 3}, {"name": "Oignons blanc botte", "qty": 1}, {"name": "Oignons rouge", "qty": 3}, {"name": "Courge rouge", "qty": 2}, {"name": "Comcombre", "qty": 2}, {"name": "Celeri", "qty": null}, {"name": "Poireaux", "qty": null}, {"name": "Haricots verts", "qty": null}, {"name": "Brocolis", "qty": null}, {"name": "Chou-fleur", "qty": null}, {"name": "Épinards", "qty": null}, {"name": "Salade iceberg", "qty": 2}, {"name": "Champignons barquette", "qty": 2}, {"name": "Poivrons", "qty": null}, {"name": "Aubergines", "qty": null}, {"name": "Avocats", "qty": 3}, {"name": "Échalotes", "qty": null}, {"name": "Ail", "qty": null}, {"name": "Coriandre", "qty": 2}, {"name": "Persil", "qty": 1}, {"name": "Menthe", "qty": 1}, {"name": "Basilic", "qty": 1}, {"name": "Citrons", "qty": null}], "Fruits": [{"name": "Pommes vertes", "qty": 3}, {"name": "Bananes", "qty": 2}, {"name": "Brugnion", "qty": 3}, {"name": "Oranges", "qty": null}, {"name": "Clémentines", "qty": null}, {"name": "Poires", "qty": null}, {"name": "Kiwis", "qty": null}, {"name": "Raisins", "qty": 1}, {"name": "Fraises", "qty": null}, {"name": "Pêches", "qty": null}, {"name": "Melon", "qty": null}, {"name": "Pastèque", "qty": null}, {"name": "Ananas decoupé", "qty": 1}, {"name": "Mangue", "qty": null}, {"name": "Genade", "qty": 1}, {"name": "noix sachet", "qty": 1}], "Boîtes de conserve": [{"name": "Tomates concassées", "qty": null}, {"name": "Haricots verts", "qty": 4}, {"name": "Petits pois", "qty": null}, {"name": "Maïs", "qty": 3}, {"name": "Haricots rouges", "qty": null}, {"name": "Pois chiches", "qty": 3}, {"name": "Lentilles", "qty": null}, {"name": "Thon", "qty": null}, {"name": "Sardines", "qty": null}, {"name": "Maquereaux", "qty": null}, {"name": "Champignons", "qty": null}, {"name": "Lait de coco", "qty": null}, {"name": "Saumon fumé", "qty": 4}], "Produits d'entretien": [{"name": "Liquide vaisselle", "qty": null}, {"name": "Tablettes lave-vaisselle", "qty": null}, {"name": "Liquide de rinçage", "qty": null}, {"name": "Lessive", "qty": null}, {"name": "Adoucissant", "qty": null}, {"name": "Nettoyant multi-usages", "qty": null}, {"name": "Nettoyant sols", "qty": null}, {"name": "Nettoyant vitres", "qty": null}, {"name": "Désinfectant", "qty": null}, {"name": "Eau de Javel", "qty": null}, {"name": "Éponges", "qty": null}, {"name": "Chiffons microfibres", "qty": null}, {"name": "Sacs poubelle", "qty": null}, {"name": "Papier aluminium", "qty": null}, {"name": "Film alimentaire", "qty": null}, {"name": "Papier cuisson", "qty": null}, {"name": "Papier toilette", "qty": 2}, {"name": "Essuie-tout", "qty": 2}, {"name": "Mouchoirs", "qty": null}], "Boissons non alcoolisées": [{"name": "Eau plate", "qty": 2}, {"name": "Eau gazeuse", "qty": null}, {"name": "Jus d'orange", "qty": null}, {"name": "Jus de pomme", "qty": null}, {"name": "Oasis Tropical", "qty": 2}, {"name": "Coca-Cola zero", "qty": 2}, {"name": "Pepsi max", "qty": 1}, {"name": "Thé", "qty": null}, {"name": "Café", "qty": null}, {"name": "Infusions", "qty": null}], "Divers": [{"name": "Pain", "qty": null}, {"name": "Œufs", "qty": null}, {"name": "Lait", "qty": 6}, {"name": "Beurre", "qty": null}, {"name": "Fromage", "qty": null}, {"name": "Yaourts", "qty": null}, {"name": "Crème fraîche Elle &vire Rouge", "qty": 2}, {"name": "Riz", "qty": null}, {"name": "Pâtes pennes", "qty": 2}, {"name": "Pates tortelini", "qty": 2}, {"name": "Semoule", "qty": null}, {"name": "Farine", "qty": null}, {"name": "Sucre", "qty": null}, {"name": "Sel", "qty": null}, {"name": "Poivre", "qty": null}, {"name": "Huile d'olive", "qty": 1}, {"name": "Vinaigre", "qty": null}, {"name": "Moutarde", "qty": null}, {"name": "Biscottes", "qty": 2}, {"name": "Céréales", "qty": null}, {"name": "Biscuits", "qty": null}, {"name": "Chocolat", "qty": null}, {"name": "Compote", "qty": null}]};
+const ICONS = {"Légumes Frais": "🥕", "Fruits": "🍎", "Boîtes de conserve": "🥫", "Produits d'entretien": "🧹", "Boissons non alcoolisées": "🥤", "Divers": "🛒"};
+const KEY = "liste_courses_v1";
+let state = JSON.parse(localStorage.getItem(KEY) || "{}");
+let active = "Toutes";
+let query = "";
+
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function allItems() {
+  const out=[];
+  for (const [cat,items] of Object.entries(DATA))
+    items.forEach((it,i)=>out.push({...it,cat,i}));
+  return out;
+}
+function isDone(cat,i) { return !!(state[cat+"::"+i]?.done); }
+function getQty(cat,i,def) {
+  const v=state[cat+"::"+i]?.qty;
+  return v ?? (def ?? "");
+}
+function setItem(cat,i,patch) {
+  const k=cat+"::"+i; state[k]={...(state[k]||{}),...patch}; save(); render();
+}
+function renderTabs() {
+  const tabs=document.getElementById("tabs");
+  const names=["Toutes",...Object.keys(DATA)];
+  tabs.innerHTML=names.map(n=>`<button class="tab ${n===active?"active":""}" data-tab="${n}">${n==="Toutes"?"📋":ICONS[n]} ${n}</button>`).join("");
+  tabs.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{active=b.dataset.tab;render();});
+}
+function filtered(cat,it,i) {
+  return !query || it.name.toLowerCase().includes(query.toLowerCase());
+}
+function render() {
+  renderTabs();
+  const main=document.getElementById("main");
+  let cats=active==="Toutes"?Object.keys(DATA):[active];
+  let total=0, done=0;
+  main.innerHTML="";
+  for(const cat of cats) {
+    const visible=DATA[cat].map((it,i)=>[it,i]).filter(([it,i])=>filtered(cat,it,i));
+    if(!visible.length) continue;
+    const sec=document.createElement("section");
+    sec.innerHTML=`<div class="section-title">${ICONS[cat]} ${cat}</div><div class="progress"><div></div></div>`;
+    const card=document.createElement("div"); card.className="card";
+    visible.forEach(([it,i])=>{
+      total++; if(isDone(cat,i)) done++;
+      const row=document.createElement("div"); row.className="item"+(isDone(cat,i)?" done":"");
+      row.innerHTML=`<button class="check" aria-label="Acheter">${isDone(cat,i)?"✓":""}</button>
+        <div class="name">${it.name}</div>
+        <input class="qty" inputmode="decimal" value="${getQty(cat,i,it.qty)}" placeholder="Qté" aria-label="Quantité">`;
+      row.querySelector(".check").onclick=()=>setItem(cat,i,{done:!isDone(cat,i)});
+      row.querySelector(".qty").onchange=e=>setItem(cat,i,{qty:e.target.value});
+      card.appendChild(row);
+    });
+    sec.appendChild(card);
+    main.appendChild(sec);
+  }
+  if(!main.children.length) main.innerHTML='<div class="empty">Aucun article trouvé.</div>';
+  document.getElementById("summary").textContent = `${done} acheté${done>1?"s":""} · ${Math.max(total-done,0)} à acheter`;
+  document.querySelectorAll(".progress").forEach((p,idx)=>{
+    const sec=p.parentElement, rows=sec.querySelectorAll(".item"), d=sec.querySelectorAll(".item.done").length;
+    p.firstElementChild.style.width=(rows.length?100*d/rows.length:0)+"%";
+  });
+}
+document.getElementById("search").oninput=e=>{query=e.target.value;render();};
+document.getElementById("reset").onclick=()=>{
+  if(confirm("Réinitialiser les articles cochés et les quantités modifiées ?")){state={};save();render();}
+};
+document.getElementById("share").onclick=async()=>{
+  const remaining=allItems().filter(x=>!isDone(x.cat,x.i));
+  const text=remaining.map(x=>`${x.name}${getQty(x.cat,x.i,x.qty)? " — "+getQty(x.cat,x.i,x.qty):""}`).join("\n");
+  if(navigator.share) await navigator.share({title:"Ma liste de courses",text});
+  else { await navigator.clipboard.writeText(text); alert("Liste copiée dans le presse-papiers."); }
+};
+render();
+</script>
+</body>
+</html>
